@@ -3,9 +3,12 @@
 """ alto_tools.py: simple methods to perform operations on ALTO xml files """
 
 import argparse
+import click
+# https://palletsprojects.com/p/click/
 import codecs
 import os
 import sys
+
 from lxml import etree
 # http://lxml.de/installation.html
 # http://lxml.de/compatibility.html
