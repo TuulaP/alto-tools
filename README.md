@@ -26,3 +26,4 @@
 ## Requirements
 
 * [lxml](http://lxml.de/)
+* [click](https://palletsprojects.com/p/click/)
