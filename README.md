@@ -6,7 +6,7 @@
 
 [![image](https://travis-ci.org/cneud/alto-tools.svg?branch=master)](https://travis-ci.org/cneud/alto-tools)
 
-Planned operations:
+## Planned operations:
 
 * extract **OCR confidence** of the ALTO document(s)  
   ``python alto_tools.py {INPUT} --confidence``
@@ -23,6 +23,6 @@ Planned operations:
 * xsd **validate** the ALTO document(s)  
   ``python alto_tools.py {INPUT} --validate``
 
-Requirements:
+## Requirements:
 
 * [lxml](http://lxml.de/)
