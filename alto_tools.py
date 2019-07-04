@@ -24,7 +24,8 @@ def alto_parse(alto):
     # Register ALTO namespaces
     namespace = {'alto-1': 'http://schema.ccs-gmbh.com/ALTO',
                  'alto-2': 'http://www.loc.gov/standards/alto/ns-v2#',
-                 'alto-3': 'http://www.loc.gov/standards/alto/ns-v3#'}
+                 'alto-3': 'http://www.loc.gov/standards/alto/ns-v3#',
+		 'kk-ocr': 'kk-ocr'}
     # Extract namespace from document root
     if 'http://' in str(xml.getroot().tag.split('}')[0].strip('{')):
         xmlns = xml.getroot().tag.split('}')[0].strip('{')
@@ -39,11 +40,11 @@ def alto_parse(alto):
     if xmlns in namespace.values():
         return alto, xml, xmlns
     else:
-        sys.stdout.write('\nWARNING: File "%s": namespace is not registered.'
-                         % alto.name)
+        sys.stdout.write('\nWARNING: File "%s": namespace %s is not registered.'
+                         % (alto.name,xmlns))
 
 
-def alto_text(xml, xmlns):
+def alto_text(xml, xmlns, output, args):
     """ Extract text content from ALTO xml file """
     # Make sure to use UTF-8
     if sys.stdout.encoding != 'UTF-8':
@@ -434,9 +435,9 @@ def write_output(alto, output, args):
         sys.stdout.write()
     else:
         if args.text:
-            output_filename = alto.name + '.txt'
+            output_filename = output + os.path.basename(alto.name).split('.')[0] + '.txt'
             sys.stdout = open(output_filename, 'w')
-            sys.stdout.write('writing output file: ' + alto.name + '.txt')
+            sys.stderr.write('writing output file: ' + output_filename + '\n')
         if args.metadata:
             output_filename = alto.name + '.md.txt'
             sys.stdout = open(output_filename, 'w')
@@ -537,6 +538,8 @@ def main():
         os.system('python alto_tools.py -h')
         sys.exit(-1)
     else:
+        print("Outti: ", args.output)
+
         fnfilter = lambda fn: fn.endswith('.xml') or fn.endswith('.alto')
         for filename in walker(sys.argv[1:], fnfilter):
             alto = open(filename, 'r', encoding='UTF8')
@@ -544,10 +547,12 @@ def main():
                 alto, xml, xmlns = alto_parse(alto)
             except IndexError:
                 pass
+            if args.output:
+                write_output(alto, args.output, args)
             if args.confidence:
                 alto_confidence(alto, xml, xmlns)
             if args.text:
-                alto_text(xml, xmlns)
+                alto_text(xml, xmlns, args.output, args)
             if args.graphic:
                 alto_graphic(xml, xmlns)
             if args.metadata:
