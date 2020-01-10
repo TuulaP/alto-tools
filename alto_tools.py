@@ -39,11 +39,20 @@ def alto_parse(alto):
             sys.stdout.write('\nWARNING: File "%s": no namespace declaration '
                              'found.' % alto.name)
             xmlns = 'no_namespace_found'
+
+    # NatlibFi quickfix
+    if xmlns not in namespace.keys():
+        # sys.stdout.write('\nNote: Adding : File "%s": namespace %s .'
+        #                 % (alto.name,xmlns))
+        namespace['nlf'] = xmlns
+
+    # print(namespace)
+
     if xmlns in namespace.values():
         return alto, xml, xmlns
     else:
         sys.stdout.write('\nWARNING: File "%s": namespace %s is not registered.'
-                         % (alto.name,xmlns))
+                         % (alto.name, xmlns))
 
 
 def alto_text(xml, xmlns, output, args):
@@ -52,14 +61,35 @@ def alto_text(xml, xmlns, output, args):
     if sys.stdout.encoding != 'UTF-8':
         sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
     # Find all TextLine elements
-    for lines in xml.iterfind('.//{%s}TextLine' % xmlns):
+
+    namedef = "{%s}" % xmlns
+    # print("xmlns , namedef ", xmlns, namedef)
+    if xmlns.startswith("//"):  # local .xsd
+        namedef = ""
+
+    # for lines in xml.iterfind('{%s}.//TextLine' % xmlns):
+    for lines in xml.iterfind(namedef + './/TextLine'):
         # New line after every TextLine element
         sys.stdout.write('\n')
         # Find all String elements
-        for line in lines.findall('{%s}String' % xmlns):
+        for line in lines.findall(namedef + 'String'):
             # Get value of attribute CONTENT from all String elements
-            text = line.attrib.get('CONTENT') + ' '
+
+            if ('SUBS_CONTENT' not in line.attrib and 'SUBS_TYPE' not in line.attrib):
+                text = line.attrib.get('CONTENT') + ' '
+                #print("Normisna: >{0}<".format(text))
+            else:
+                if ('HypPart1' in line.attrib.get('SUBS_TYPE')):
+                    text = line.attrib.get('SUBS_CONTENT') + ' '
+                if ('HypPart2' in line.attrib.get('SUBS_TYPE')):
+                    pass
+                # TODO are there three-hyphen-words (or more)  refactor
+                #if ('HypPart3' in line.attrib.get('SUBS_TYPE')):
+                    #print("\n3part combound word!! ",line.attrib.get('SUBS_CONTENT'))
+                    pass
+
             sys.stdout.write(text)
+            text=""
 
 
 def alto_graphic(xml, xmlns):
@@ -67,33 +97,33 @@ def alto_graphic(xml, xmlns):
     # Find all GraphicalElement elements
     for graphical in xml.iterfind('.//{%s}GraphicalElement' % xmlns):
         # Get ID of GraphicalElement element
-        graphical_id = graphical.attrib.get('ID')
+        graphical_id=graphical.attrib.get('ID')
         # Get coordinates of GraphicalElement element
-        graphical_coords = (graphical.attrib.get('HEIGHT') + ','
+        graphical_coords=(graphical.attrib.get('HEIGHT') + ','
                             + graphical.attrib.get('WIDTH') + ','
                             + graphical.attrib.get('VPOS') + ','
                             + graphical.attrib.get('HPOS'))
         sys.stdout.write('\n')
-        graphical_elements = graphical_id + '=' + graphical_coords
+        graphical_elements=graphical_id + '=' + graphical_coords
         sys.stdout.write(graphical_elements)
 
 
 def alto_confidence(alto, xml, xmlns):
     """ Calculate word confidence for ALTO xml file """
-    score = 0
-    count = 0
+    score=0
+    count=0
     # Find all String elements
     for elem in xml.iterfind('.//{%s}String' % xmlns):
         # Get value of attribute WC (Word Confidence) of all String elements
-        wc = elem.attrib.get('WC')
+        wc=elem.attrib.get('WC')
         # Calculate sum of all WC values as float
         score += float(wc)
         # Increment counter for each word
         count += 1
         # Divide sum of WC values by number of words
         if count > 0:
-            confidence = score / count
-            result = round(100 * confidence, 2)
+            confidence=score / count
+            result=round(100 * confidence, 2)
             sys.stdout.write('\nFile: %s, Confidence: %s' %
                              (alto.name, result))
         else:
@@ -103,12 +133,12 @@ def alto_confidence(alto, xml, xmlns):
 def alto_transform(xml):
     """ Transform ALTO xml with XSLT """
     # http://lxml.de/xpathxslt.html#xslt
-    xsl = open('xsl', 'r', encoding='UTF8')
+    xsl=open('xsl', 'r', encoding = 'UTF8')
     try:
-        dom = etree.parse(xml)
-        xslt = etree.parse(xsl)
-        transform = etree.XSLT(xslt)
-        newdom = transform(dom)
+        dom=etree.parse(xml)
+        xslt=etree.parse(xsl)
+        transform=etree.XSLT(xslt)
+        newdom=transform(dom)
         print(etree.tostring(newdom))
     except AttributeError:
         pass
@@ -540,7 +570,6 @@ def main():
         os.system('python alto_tools.py -h')
         sys.exit(-1)
     else:
-        print("Outti: ", args.output)
 
         fnfilter = lambda fn: fn.endswith('.xml') or fn.endswith('.alto')
         for filename in walker(sys.argv[1:], fnfilter):
