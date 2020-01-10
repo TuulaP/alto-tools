@@ -7,6 +7,7 @@ import codecs
 import os
 import sys
 from lxml import etree
+
 # http://lxml.de/installation.html
 # http://lxml.de/compatibility.html
 
